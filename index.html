@@ -111,19 +111,25 @@
 
         let isTouching = false;
 
-        canvas.addEventListener('mousedown', (event) => {
+        function handleTouchStart(event) {
             isTouching = true;
-            if (event.clientX < canvas.width / 2) {
+            let touchX = event.touches ? event.touches[0].clientX : event.clientX;
+            if (touchX < canvas.width / 2) {
                 player.dx = -moveSpeed;
             } else {
                 player.dx = moveSpeed;
             }
-        });
+        }
 
-        canvas.addEventListener('mouseup', () => {
+        function handleTouchEnd() {
             isTouching = false;
             player.dx = 0;
-        });
+        }
+
+        canvas.addEventListener('mousedown', handleTouchStart);
+        canvas.addEventListener('mouseup', handleTouchEnd);
+        canvas.addEventListener('touchstart', handleTouchStart);
+        canvas.addEventListener('touchend', handleTouchEnd);
 
         function gameLoop() {
             if (gameOver) return;
