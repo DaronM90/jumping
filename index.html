@@ -50,13 +50,13 @@
 
         let player = { 
             x: canvas.width / 2, 
-            y: canvas.height - 50, 
+            y: canvas.height - 100, 
             width: 40, 
             height: 40, 
             dy: 0, 
             dx: 0, 
             score: 0, 
-            maxY: canvas.height - 50, 
+            maxY: canvas.height - 100, 
             spriteFrame: 0 
         };
         const gravity = 0.4;
@@ -89,7 +89,11 @@
         }
 
         for (let i = 0; i < 10; i++) {
-            platforms.push(generatePlatform(i * (canvas.height / 10)));
+            let platformY = i * (canvas.height / 10);
+            platforms.push(generatePlatform(platformY));
+            if (i % 3 === 0) {
+                obstacles.push(generateObstacle(platformY - 20));
+            }
         }
 
         function gameLoop() {
