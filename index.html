@@ -6,9 +6,17 @@
     <title>Doodle Jump</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #87CEEB; font-family: Arial, sans-serif; }
+        body { margin: 0; overflow: hidden; font-family: 'Comic Sans MS', Arial, sans-serif; }
         canvas { display: block; }
-        #score { position: absolute; top: 10px; left: 10px; font-size: 20px; color: white; }
+        #score { 
+            position: absolute; 
+            top: 10px; 
+            left: 10px; 
+            font-size: 24px; 
+            color: #fff; 
+            text-shadow: 2px 2px 4px #000; 
+            z-index: 10; 
+        }
     </style>
 </head>
 <body>
@@ -34,32 +42,26 @@
             score: 0, 
             maxY: 0 
         };
-        const gravity = 0.4; // Уменьшена гравитация для более плавного прыжка
-        const jumpPower = -10; // Увеличена сила прыжка
+        const gravity = 0.3;
+        const jumpPower = -12;
         const moveSpeed = 5;
         let cameraY = 0;
         let platforms = [];
         let obstacles = [];
         const MAX_PLATFORMS = 20;
         const OBSTACLE_SPEED = 3;
-        const MAX_HORIZONTAL_GAP = 90; // Максимальный горизонтальный разрыв между платформами
-        
+        const MAX_HORIZONTAL_GAP = 100;
+
         function generatePlatform(y, prevPlatform = null) {
             let x;
             if (prevPlatform) {
-                // Ограничиваем горизонтальное расстояние от предыдущей платформы
                 const minX = Math.max(0, prevPlatform.x - MAX_HORIZONTAL_GAP);
                 const maxX = Math.min(canvas.width - 50, prevPlatform.x + MAX_HORIZONTAL_GAP);
                 x = minX + Math.random() * (maxX - minX);
             } else {
                 x = Math.random() * (canvas.width - 50);
             }
-            return {
-                x: x,
-                y: y,
-                width: 50,
-                height: 10
-            };
+            return { x: x, y: y, width: 50, height: 10 };
         }
 
         function generateObstacle() {
@@ -76,7 +78,7 @@
             platforms = [];
             obstacles = [];
             for (let i = 0; i < 10; i++) {
-                let platformY = canvas.height - (i * 50); // Уменьшено расстояние до 50
+                let platformY = canvas.height - (i * 50);
                 platforms.push(generatePlatform(platformY, i > 0 ? platforms[i - 1] : null));
             }
             player.x = platforms[0].x + platforms[0].width / 2 - player.width / 2;
@@ -91,10 +93,9 @@
             const bottomLimit = cameraY + canvas.height + 100;
 
             if (topPlatformY > cameraY - canvas.height / 2 && platforms.length < MAX_PLATFORMS) {
-                const newY = topPlatformY - 50; // Уменьшено расстояние до 50
+                const newY = topPlatformY - 50;
                 platforms.push(generatePlatform(newY, platforms[platforms.length - 1]));
             }
-
             platforms = platforms.filter(p => p.y > cameraY - canvas.height && p.y < bottomLimit);
         }
 
@@ -102,11 +103,7 @@
             if (player.score >= 150 && Math.random() < 0.02) {
                 obstacles.push(generateObstacle());
             }
-
-            obstacles.forEach(obstacle => {
-                obstacle.y += obstacle.dy;
-            });
-
+            obstacles.forEach(obstacle => obstacle.y += obstacle.dy);
             obstacles = obstacles.filter(o => o.y < cameraY + canvas.height);
         }
 
@@ -146,28 +143,53 @@
                    player.y + player.height > object.y;
         }
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function drawBackground() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB'); // Светло-голубой сверху
+            gradient.addColorStop(1, '#4682B4'); // Темно-голубой снизу
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
 
-            ctx.fillStyle = '#228B22';
+        function draw() {
+            drawBackground(); // Рисуем градиентный фон
+
+            // Платформы (трава)
             platforms.forEach(platform => {
                 const platformY = platform.y - cameraY;
                 if (platformY > -platform.height && platformY < canvas.height) {
+                    ctx.fillStyle = '#8B4513'; // Коричневая основа
                     ctx.fillRect(platform.x, platformY, platform.width, platform.height);
+                    ctx.fillStyle = '#32CD32'; // Зеленая трава сверху
+                    ctx.fillRect(platform.x, platformY - 2, platform.width, 2);
                 }
             });
 
-            ctx.fillStyle = '#FF4500';
+            // Персонаж (круг с глазами)
             const playerY = player.y - cameraY;
             if (playerY > -player.height && playerY < canvas.height) {
-                ctx.fillRect(player.x, playerY, player.width, player.height);
+                ctx.fillStyle = '#FFD700'; // Желтый цвет
+                ctx.beginPath();
+                ctx.arc(player.x + player.width / 2, playerY + player.height / 2, player.width / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000'; // Глаза
+                ctx.beginPath();
+                ctx.arc(player.x + player.width / 3, playerY + player.height / 3, 3, 0, Math.PI * 2);
+                ctx.arc(player.x + player.width * 2 / 3, playerY + player.height / 3, 3, 0, Math.PI * 2);
+                ctx.fill();
             }
 
+            // Препятствия (шипы)
             ctx.fillStyle = '#FF0000';
             obstacles.forEach(obstacle => {
                 const obstacleY = obstacle.y - cameraY;
                 if (obstacleY > -obstacle.height && obstacleY < canvas.height) {
-                    ctx.fillRect(obstacle.x, obstacleY, obstacle.width, obstacle.height);
+                    ctx.beginPath();
+                    ctx.moveTo(obstacle.x + obstacle.width / 2, obstacleY); // Вершина треугольника
+                    ctx.lineTo(obstacle.x, obstacleY + obstacle.height); // Левая точка
+                    ctx.lineTo(obstacle.x + obstacle.width, obstacleY + obstacle.height); // Правая точка
+                    ctx.closePath();
+                    ctx.fill();
                 }
             });
         }
