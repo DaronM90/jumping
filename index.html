@@ -86,12 +86,11 @@
             cameraY = player.y - canvas.height / 2;
             player.dy = jumpPower;
             gameOverScreen.style.display = 'none';
-            gameOver = false;
         }
 
         function generateNewPlatforms() {
-            while (platforms.length < 10 || (platforms.length > 0 && platforms[platforms.length - 1].y > player.maxY - canvas.height)) {
-                let newY = platforms.length > 0 ? platforms[platforms.length - 1].y - 80 : canvas.height - 80;
+            while (platforms.length < 10 || platforms[platforms.length - 1].y > player.maxY - canvas.height) {
+                let newY = platforms[platforms.length - 1].y - 80;
                 platforms.push(generatePlatform(newY));
             }
         }
@@ -103,12 +102,14 @@
         }
 
         restartButton.addEventListener('click', function() {
+            gameOver = false;
+            player.score = 0;
             generateInitialPlatforms();
             gameLoop();
         });
 
         generateInitialPlatforms();
-        
+
         let isTouching = false;
 
         function handleTouchStart(event) {
