@@ -49,20 +49,20 @@
         canvas.height = window.innerHeight;
 
         let player = { 
-            x: canvas.width / 2, 
-            y: canvas.height - 100, 
+            x: 0, 
+            y: 0, 
             width: 40, 
             height: 40, 
             dy: 0, 
             dx: 0, 
             score: 0, 
-            maxY: canvas.height - 100, 
+            maxY: 0, 
             spriteFrame: 0 
         };
         const gravity = 0.4;
         const jumpPower = -10;
         const moveSpeed = 5;
-        let cameraY = canvas.height / 2;
+        let cameraY = 0;
         const platforms = [];
         const obstacles = [];
         const playerImage = new Image();
@@ -89,23 +89,25 @@
         }
 
         function generateInitialPlatforms() {
+            platforms.length = 0;
             for (let i = 0; i < 10; i++) {
-                let platformY = i * (canvas.height / 10);
+                let platformY = canvas.height - (i * 80);
                 platforms.push(generatePlatform(platformY));
             }
+            player.x = platforms[0].x + platforms[0].width / 2 - player.width / 2;
+            player.y = platforms[0].y - player.height;
+            player.maxY = player.y;
+            cameraY = player.y - canvas.height / 2;
         }
 
         function generateNewPlatforms() {
             while (platforms.length < 10) {
-                let newY = platforms[platforms.length - 1].y - (canvas.height / 10);
+                let newY = platforms[platforms.length - 1].y - 80;
                 platforms.push(generatePlatform(newY));
             }
         }
 
         generateInitialPlatforms();
-
-        player.x = platforms[0].x + platforms[0].width / 2 - player.width / 2;
-        player.y = platforms[0].y - player.height;
 
         let isTouching = false;
 
