@@ -107,6 +107,16 @@
             }
         }
 
+        function endGame() {
+            gameOver = true;
+            gameOverScreen.style.display = 'block';
+            finalScoreDisplay.textContent = 'Score: ' + player.score;
+        }
+
+        restartButton.addEventListener('click', function() {
+            location.reload();
+        });
+
         generateInitialPlatforms();
 
         let isTouching = false;
@@ -158,42 +168,8 @@
                 cameraY = player.maxY - canvas.height / 2;
             }
             
-            if (player.score >= 100 && Math.random() < 0.02) {
-                obstacles.push(generateObstacle(player.maxY - canvas.height));
-            }
-
-            obstacles.forEach((obstacle, index) => {
-                obstacle.y += obstacle.dy;
-                ctx.fillStyle = 'red';
-                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                if (obstacle.y > canvas.height) {
-                    obstacles.splice(index, 1);
-                }
-            });
-
             generateNewPlatforms();
             
-            ctx.save();
-            ctx.translate(0, -cameraY);
-            
-            player.spriteFrame = player.dy < 0 ? 1 : 0;
-            ctx.drawImage(playerImage, player.spriteFrame * 40, 0, 40, 40, player.x, player.y, player.width, player.height);
-            
-            ctx.fillStyle = 'brown';
-            platforms.forEach(platform => {
-                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-                if (
-                    player.dy > 0 &&
-                    player.y + player.height > platform.y &&
-                    player.y + player.height < platform.y + platform.height &&
-                    player.x < platform.x + platform.width &&
-                    player.x + player.width > platform.x
-                ) {
-                    player.dy = jumpPower;
-                }
-            });
-            
-            ctx.restore();
             requestAnimationFrame(gameLoop);
         }
         gameLoop();
