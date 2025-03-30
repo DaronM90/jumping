@@ -162,6 +162,15 @@
                 obstacles.push(generateObstacle(player.maxY - canvas.height));
             }
 
+            obstacles.forEach((obstacle, index) => {
+                obstacle.y += obstacle.dy;
+                ctx.fillStyle = 'red';
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                if (obstacle.y > canvas.height) {
+                    obstacles.splice(index, 1);
+                }
+            });
+
             generateNewPlatforms();
             
             ctx.save();
