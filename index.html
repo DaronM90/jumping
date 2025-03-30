@@ -133,7 +133,7 @@
             player.x = platforms[0].x + platforms[0].width / 2 - player.width / 2;
             player.y = platforms[0].y - player.height;
             player.maxY = player.y;
-            cameraY = player.y - canvas.height / 2;
+            cameraY = player.y - canvas.height / 2; // Инициализация камеры
             player.dy = jumpPower;
             currentScoreDisplay.textContent = 'Current Score: 0';
         }
@@ -254,6 +254,12 @@
             currentScoreDisplay.textContent = 'Current Score: ' + player.score;
         }
 
+        function updateCamera() {
+            // Камера следует за игроком с плавным смещением
+            const targetCameraY = player.y - canvas.height / 2;
+            cameraY += (targetCameraY - cameraY) * 0.1; // Плавное движение камеры (0.1 - коэффициент сглаживания)
+        }
+
         let lastTime = 0;
         const frameRate = 1000 / 60;
 
@@ -280,6 +286,7 @@
                         updateScore();
                     }
 
+                    updateCamera(); // Обновляем камеру в каждом кадре
                     generateNewPlatforms();
                     generateObstacles();
 
