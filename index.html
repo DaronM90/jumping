@@ -78,8 +78,8 @@
         let player = { 
             x: 0, 
             y: 0, 
-            width: 20, 
-            height: 30, 
+            width: 40, // Увеличен размер
+            height: 60, // Увеличен размер
             dy: 0, 
             dx: 0, 
             score: 0, 
@@ -126,7 +126,7 @@
         function generateCloud() {
             return {
                 x: Math.random() * canvas.width,
-                y: cameraY + canvas.height + Math.random() * 100, // Уменьшено расстояние появления
+                y: cameraY + canvas.height + Math.random() * 100,
                 radius: 30 + Math.random() * 20
             };
         }
@@ -218,7 +218,6 @@
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Облака
             const cloudOffset = cameraY * 0.2;
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             clouds.forEach((cloud, index) => {
@@ -227,7 +226,6 @@
                 ctx.arc(cloud.x, cloudY, cloud.radius, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Перемещение облака вниз, если оно ушло за верхний край
                 if (cloudY + cloud.radius < 0) {
                     clouds[index] = generateCloud();
                 }
@@ -258,17 +256,11 @@
 
                 const playerY = player.y - cameraY;
                 if (playerY > -player.height && playerY < canvas.height) {
-                    // Персонаж как огонек с глазками
+                    // Персонаж как иконка Hola VPN
                     const squashFactor = Math.min(0.2, Math.abs(player.dy) * 0.02);
                     const widthScale = 1 + squashFactor;
                     const heightScale = 1 - squashFactor;
-                    const gradient = ctx.createRadialGradient(
-                        player.x + player.width / 2, playerY + player.height / 2, 0,
-                        player.x + player.width / 2, playerY + player.height / 2, player.width / 2 * widthScale
-                    );
-                    gradient.addColorStop(0, '#FF4500'); // Яркий центр
-                    gradient.addColorStop(1, 'rgba(255, 165, 0, 0)'); // Прозрачный край
-                    ctx.fillStyle = gradient;
+                    ctx.fillStyle = '#FF6200'; // Оранжевый цвет Hola VPN
                     ctx.beginPath();
                     ctx.moveTo(player.x + player.width / 2, playerY); // Вершина пламени
                     ctx.quadraticCurveTo(player.x + player.width * widthScale, playerY + player.height / 2, 
@@ -277,21 +269,25 @@
                                         player.x + player.width / 2, playerY);
                     ctx.fill();
 
-                    // Глазки
-                    ctx.fillStyle = '#000';
+                    // Белые глазки с черными зрачками
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.arc(player.x + player.width / 3 * widthScale, playerY + player.height / 3 * heightScale, 6, 0, Math.PI * 2);
+                    ctx.arc(player.x + player.width * 2 / 3 * widthScale, playerY + player.height / 3 * heightScale, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#000000';
                     ctx.beginPath();
                     ctx.arc(player.x + player.width / 3 * widthScale, playerY + player.height / 3 * heightScale, 2, 0, Math.PI * 2);
                     ctx.arc(player.x + player.width * 2 / 3 * widthScale, playerY + player.height / 3 * heightScale, 2, 0, Math.PI * 2);
                     ctx.fill();
                 }
 
-                // Препятствия как падающие капли
                 ctx.fillStyle = '#00BFFF';
                 obstacles.forEach(obstacle => {
                     const obstacleY = obstacle.y - cameraY;
                     if (obstacleY > -obstacle.height && obstacleY < canvas.height) {
                         ctx.beginPath();
-                        ctx.arc(obstacle.x + obstacle.width / 2, obstacleY + obstacle.height - obstacle.width / 2, obstacle.width / 2, 0, Math.PI); // Верхний полукруг
+                        ctx.arc(obstacle.x + obstacle.width / 2, obstacleY + obstacle.height - obstacle.width / 2, obstacle.width / 2, 0, Math.PI);
                         ctx.lineTo(obstacle.x + obstacle.width, obstacleY + obstacle.height - obstacle.width / 2);
                         ctx.quadraticCurveTo(obstacle.x + obstacle.width / 2, obstacleY, 
                                             obstacle.x, obstacleY + obstacle.height - obstacle.width / 2);
