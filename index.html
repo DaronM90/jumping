@@ -93,6 +93,14 @@
             platforms.push(generatePlatform(platformY));
         }
 
+        canvas.addEventListener('click', (event) => {
+            if (event.clientX < canvas.width / 2) {
+                player.dx = -moveSpeed;
+            } else {
+                player.dx = moveSpeed;
+            }
+        });
+
         function gameLoop() {
             if (gameOver) return;
 
