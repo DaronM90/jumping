@@ -79,7 +79,7 @@
             x: 0, 
             y: 0, 
             width: 40, 
-            height: 60, 
+            height: 40, // Круглый мяч, ширина = высоте
             dy: 0, 
             dx: 0, 
             score: 0, 
@@ -115,9 +115,9 @@
 
         function generateObstacle() {
             return {
-                x: Math.random() * (canvas.width - 20),
+                x: Math.random() * (canvas.width - 10),
                 y: cameraY - canvas.height / 2 - 20,
-                width: 20,
+                width: 10, // Узкий гвоздь
                 height: 30,
                 dy: OBSTACLE_SPEED
             };
@@ -159,9 +159,8 @@
             const topPlatformY = platforms.length > 0 ? Math.min(...platforms.map(p => p.y)) : canvas.height;
             const bottomLimit = cameraY + canvas.height + 100;
 
-            // Уменьшаем частоту появления платформ после 500 очков
             const platformChance = player.score >= 500 ? 0.3 : 1; // 30% шанс после 500 очков
-            const verticalGap = player.score >= 500 ? 80 : 50; // Увеличиваем расстояние между платформами
+            const verticalGap = player.score >= 500 ? 60 : 50; // Уменьшено с 80 до 60 после 500 очков
 
             if (topPlatformY > cameraY - canvas.height / 2 && platforms.length < MAX_PLATFORMS && Math.random() < platformChance) {
                 const newY = topPlatformY - verticalGap;
@@ -273,18 +272,18 @@
 
                 const playerY = player.y - cameraY;
                 if (playerY > -player.height && playerY < canvas.height) {
+                    // Персонаж как желтый теннисный мячик
                     const squashFactor = Math.min(0.2, Math.abs(player.dy) * 0.02);
                     const widthScale = 1 + squashFactor;
                     const heightScale = 1 - squashFactor;
-                    ctx.fillStyle = '#FF6200';
+                    ctx.fillStyle = '#FFFF00'; // Желтый цвет
                     ctx.beginPath();
-                    ctx.moveTo(player.x + player.width / 2, playerY);
-                    ctx.quadraticCurveTo(player.x + player.width * widthScale, playerY + player.height / 2, 
-                                        player.x + player.width / 2, playerY + player.height * heightScale);
-                    ctx.quadraticCurveTo(player.x, playerY + player.height / 2, 
-                                        player.x + player.width / 2, playerY);
+                    ctx.ellipse(player.x + player.width / 2, playerY + player.height / 2, 
+                                player.width / 2 * widthScale, player.height / 2 * heightScale, 
+                                0, 0, Math.PI * 2);
                     ctx.fill();
 
+                    // Глазки
                     ctx.fillStyle = '#FFFFFF';
                     ctx.beginPath();
                     ctx.arc(player.x + player.width / 3 * widthScale, playerY + player.height / 3 * heightScale, 6, 0, Math.PI * 2);
@@ -297,22 +296,21 @@
                     ctx.fill();
                 }
 
-                // Падающие капли с контуром для контраста
+                // Падающие гвозди
                 obstacles.forEach(obstacle => {
                     const obstacleY = obstacle.y - cameraY;
                     if (obstacleY > -obstacle.height && obstacleY < canvas.height) {
-                        ctx.fillStyle = '#00BFFF';
+                        ctx.fillStyle = '#808080'; // Серый цвет гвоздя
                         ctx.beginPath();
-                        ctx.arc(obstacle.x + obstacle.width / 2, obstacleY + obstacle.height - obstacle.width / 2, obstacle.width / 2, 0, Math.PI);
-                        ctx.lineTo(obstacle.x + obstacle.width, obstacleY + obstacle.height - obstacle.width / 2);
-                        ctx.quadraticCurveTo(obstacle.x + obstacle.width / 2, obstacleY, 
-                                            obstacle.x, obstacleY + obstacle.height - obstacle.width / 2);
+                        ctx.moveTo(obstacle.x + obstacle.width / 2, obstacleY); // Острие
+                        ctx.lineTo(obstacle.x + obstacle.width, obstacleY + obstacle.height); // Правая сторона шляпки
+                        ctx.lineTo(obstacle.x + obstacle.width * 0.75, obstacleY + obstacle.height); // Правая часть шляпки
+                        ctx.lineTo(obstacle.x + obstacle.width * 0.75, obstacleY + obstacle.height * 0.7); // Правая сторона стержня
+                        ctx.lineTo(obstacle.x + obstacle.width * 0.25, obstacleY + obstacle.height * 0.7); // Левая сторона стержня
+                        ctx.lineTo(obstacle.x + obstacle.width * 0.25, obstacleY + obstacle.height); // Левая часть шляпки
+                        ctx.lineTo(obstacle.x, obstacleY + obstacle.height); // Левая сторона шляпки
                         ctx.closePath();
                         ctx.fill();
-                        // Черный контур для контраста
-                        ctx.strokeStyle = '#000000';
-                        ctx.lineWidth = 1;
-                        ctx.stroke();
                     }
                 });
             }
