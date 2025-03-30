@@ -93,12 +93,23 @@
             platforms.push(generatePlatform(platformY));
         }
 
-        canvas.addEventListener('click', (event) => {
+        player.x = platforms[0].x + platforms[0].width / 2 - player.width / 2;
+        player.y = platforms[0].y - player.height;
+
+        let isTouching = false;
+
+        canvas.addEventListener('mousedown', (event) => {
+            isTouching = true;
             if (event.clientX < canvas.width / 2) {
                 player.dx = -moveSpeed;
             } else {
                 player.dx = moveSpeed;
             }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isTouching = false;
+            player.dx = 0;
         });
 
         function gameLoop() {
@@ -108,7 +119,9 @@
             
             player.dy += gravity;
             player.y += player.dy;
-            player.x += player.dx;
+            if (isTouching) {
+                player.x += player.dx;
+            }
             
             if (player.y > canvas.height) {
                 endGame();
