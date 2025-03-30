@@ -59,10 +59,17 @@
         }
 
         function generateNewPlatforms() {
-            while (platforms.length < 10 || (platforms.length > 0 && platforms[platforms.length - 1].y > player.maxY - canvas.height)) {
-                let newY = platforms.length > 0 ? platforms[platforms.length - 1].y - 80 : canvas.height;
+            // Находим самую верхнюю платформу
+            const topPlatformY = platforms.length > 0 ? Math.min(...platforms.map(p => p.y)) : canvas.height;
+            
+            // Генерируем новые платформы, если верхняя платформа слишком близко к верхней границе экрана
+            while (topPlatformY > cameraY - canvas.height / 2) {
+                const newY = topPlatformY - 80; // Расстояние между платформами
                 platforms.push(generatePlatform(newY));
             }
+            
+            // Удаляем платформы, которые слишком далеко внизу
+            platforms = platforms.filter(p => p.y > cameraY - canvas.height);
         }
 
         generateInitialPlatforms();
@@ -94,24 +101,67 @@
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-        function gameLoop() {
+        function checkCollision(player, platform) {
+            return player.x < platform.x + platform.width &&
+                   player.x + player.width > platform.x &&
+                   player.y + player.height <= platform.y + platform.height &&
+                   player.y + player.height + player.dy >= platform.y;
+        }
+
+        function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
+
+            // Отрисовка платформ
+            ctx.fillStyle = '#228B22'; // Зеленый цвет для платформ
+            platforms.forEach(platform => {
+                ctx.fillRect(platform.x, platform.y - cameraY, platform.width, platform.height);
+            });
+
+            // Отрисовка персонажа
+            ctx.fillStyle = '#FF4500'; // Оранжевый цвет для персонажа
+            ctx.fillRect(player.x, player.y - cameraY, player.width, player.height);
+        }
+
+        function gameLoop() {
+            // Обновление физики
             player.dy += gravity;
             player.y += player.dy;
             if (isTouching) {
                 player.x += player.dx;
             }
-            
+
+            // Ограничение по горизонтали
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            // Проверка столкновений с платформами
+            platforms.forEach(platform => {
+                if (checkCollision(player, platform) && player.dy > 0) {
+                    player.y = platform.y - player.height;
+                    player.dy = jumpPower; // Прыжок при приземлении
+                }
+            });
+
+            // Обновление камеры и счета
             if (player.y < player.maxY) {
                 player.maxY = player.y;
                 player.score = Math.abs(Math.floor((canvas.height - player.maxY) / 10));
                 scoreDisplay.textContent = 'Score: ' + player.score;
                 cameraY = player.maxY - canvas.height / 2;
             }
-            
+
+            // Генерация новых платформ
             generateNewPlatforms();
-            
+
+            // Отрисовка
+            draw();
+
+            // Проверка проигрыша
+            if (player.y - cameraY > canvas.height) {
+                alert('Game Over! Score: ' + player.score);
+                generateInitialPlatforms(); // Рестарт игры
+            }
+
             requestAnimationFrame(gameLoop);
         }
         gameLoop();
