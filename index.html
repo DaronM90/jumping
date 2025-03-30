@@ -62,7 +62,7 @@
         const jumpPower = -10;
         const moveSpeed = 5;
         let cameraY = 0;
-        const platforms = [];
+        let platforms = [];
         let gameOver = false;
         
         function generatePlatform(y) {
@@ -75,7 +75,7 @@
         }
         
         function generateInitialPlatforms() {
-            platforms.length = 0;
+            platforms = [];
             for (let i = 0; i < 10; i++) {
                 let platformY = canvas.height - (i * 80);
                 platforms.push(generatePlatform(platformY));
