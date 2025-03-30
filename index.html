@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doodle Jump</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #87CEEB; font-family: Arial, sans-serif; }
         canvas { display: block; }
@@ -20,11 +21,15 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
+        // Telegram Web App инициализация
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+
         let player = { 
             x: 0, 
             y: 0, 
-            width: 40, 
-            height: 40, 
+            width: 30, // Уменьшен размер для меньшей нагрузки
+            height: 30, 
             dy: 0, 
             dx: 0, 
             score: 0, 
@@ -35,12 +40,13 @@
         const moveSpeed = 5;
         let cameraY = 0;
         let platforms = [];
+        const MAX_PLATFORMS = 20; // Ограничение на количество платформ
         
         function generatePlatform(y) {
             return {
-                x: Math.random() * (canvas.width - 70),
+                x: Math.random() * (canvas.width - 50),
                 y: y,
-                width: 70,
+                width: 50, // Уменьшен размер платформ
                 height: 10
             };
         }
@@ -59,17 +65,15 @@
         }
 
         function generateNewPlatforms() {
-            // Находим самую верхнюю платформу
             const topPlatformY = platforms.length > 0 ? Math.min(...platforms.map(p => p.y)) : canvas.height;
-            
-            // Генерируем новые платформы, если верхняя платформа слишком близко к верхней границе экрана
-            while (topPlatformY > cameraY - canvas.height / 2) {
-                const newY = topPlatformY - 80; // Расстояние между платформами
+            const bottomLimit = cameraY + canvas.height + 100;
+
+            if (topPlatformY > cameraY - canvas.height / 2 && platforms.length < MAX_PLATFORMS) {
+                const newY = topPlatformY - 80;
                 platforms.push(generatePlatform(newY));
             }
-            
-            // Удаляем платформы, которые слишком далеко внизу
-            platforms = platforms.filter(p => p.y > cameraY - canvas.height);
+
+            platforms = platforms.filter(p => p.y > cameraY - canvas.height && p.y < bottomLimit);
         }
 
         generateInitialPlatforms();
@@ -111,60 +115,60 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Отрисовка платформ
-            ctx.fillStyle = '#228B22'; // Зеленый цвет для платформ
+            ctx.fillStyle = '#228B22';
             platforms.forEach(platform => {
-                ctx.fillRect(platform.x, platform.y - cameraY, platform.width, platform.height);
-            });
-
-            // Отрисовка персонажа
-            ctx.fillStyle = '#FF4500'; // Оранжевый цвет для персонажа
-            ctx.fillRect(player.x, player.y - cameraY, player.width, player.height);
-        }
-
-        function gameLoop() {
-            // Обновление физики
-            player.dy += gravity;
-            player.y += player.dy;
-            if (isTouching) {
-                player.x += player.dx;
-            }
-
-            // Ограничение по горизонтали
-            if (player.x < 0) player.x = 0;
-            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
-
-            // Проверка столкновений с платформами
-            platforms.forEach(platform => {
-                if (checkCollision(player, platform) && player.dy > 0) {
-                    player.y = platform.y - player.height;
-                    player.dy = jumpPower; // Прыжок при приземлении
+                const platformY = platform.y - cameraY;
+                if (platformY > -platform.height && platformY < canvas.height) {
+                    ctx.fillRect(platform.x, platformY, platform.width, platform.height);
                 }
             });
 
-            // Обновление камеры и счета
-            if (player.y < player.maxY) {
-                player.maxY = player.y;
-                player.score = Math.abs(Math.floor((canvas.height - player.maxY) / 10));
-                scoreDisplay.textContent = 'Score: ' + player.score;
-                cameraY = player.maxY - canvas.height / 2;
+            ctx.fillStyle = '#FF4500';
+            const playerY = player.y - cameraY;
+            if (playerY > -player.height && playerY < canvas.height) {
+                ctx.fillRect(player.x, playerY, player.width, player.height);
             }
+        }
 
-            // Генерация новых платформ
-            generateNewPlatforms();
+        let lastTime = 0;
+        const frameRate = 1000 / 60; // 60 FPS
 
-            // Отрисовка
-            draw();
+        function gameLoop(timestamp) {
+            if (timestamp - lastTime >= frameRate) {
+                player.dy += gravity;
+                player.y += player.dy;
+                if (isTouching) player.x += player.dx;
 
-            // Проверка проигрыша
-            if (player.y - cameraY > canvas.height) {
-                alert('Game Over! Score: ' + player.score);
-                generateInitialPlatforms(); // Рестарт игры
+                if (player.x < 0) player.x = 0;
+                if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+                platforms.forEach(platform => {
+                    if (checkCollision(player, platform) && player.dy > 0) {
+                        player.y = platform.y - player.height;
+                        player.dy = jumpPower;
+                    }
+                });
+
+                if (player.y < player.maxY) {
+                    player.maxY = player.y;
+                    player.score = Math.abs(Math.floor((canvas.height - player.maxY) / 10));
+                    scoreDisplay.textContent = 'Score: ' + player.score;
+                    cameraY = player.maxY - canvas.height / 2;
+                }
+
+                generateNewPlatforms();
+                draw();
+
+                if (player.y - cameraY > canvas.height) {
+                    window.Telegram.WebApp.showAlert('Game Over! Score: ' + player.score);
+                    generateInitialPlatforms();
+                }
+
+                lastTime = timestamp;
             }
-
             requestAnimationFrame(gameLoop);
         }
-        gameLoop();
+        requestAnimationFrame(gameLoop);
     </script>
 </body>
 </html>
