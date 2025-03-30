@@ -118,6 +118,12 @@
             player.dx = touchX < canvas.width / 2 ? -moveSpeed : moveSpeed;
         }
 
+        function handleTouchMove(event) {
+            event.preventDefault();
+            let touchX = event.touches ? event.touches[0].clientX : event.clientX;
+            player.dx = touchX < canvas.width / 2 ? -moveSpeed : moveSpeed;
+        }
+
         function handleTouchEnd(event) {
             event.preventDefault();
             isTouching = false;
@@ -127,6 +133,7 @@
         canvas.addEventListener('mousedown', handleTouchStart, { passive: false });
         canvas.addEventListener('mouseup', handleTouchEnd, { passive: false });
         canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
         function gameLoop() {
@@ -177,32 +184,9 @@
                 }
             });
             
-            ctx.fillStyle = 'red';
-            obstacles.forEach(obstacle => {
-                obstacle.y += obstacle.dy;
-                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-                if (
-                    player.x < obstacle.x + obstacle.width &&
-                    player.x + player.width > obstacle.x &&
-                    player.y < obstacle.y + obstacle.height &&
-                    player.y + player.height > obstacle.y
-                ) {
-                    endGame();
-                }
-            });
-            
             ctx.restore();
             requestAnimationFrame(gameLoop);
         }
-
-        function endGame() {
-            gameOver = true;
-            finalScoreDisplay.textContent = 'Итоговый счет: ' + player.score;
-            gameOverScreen.style.display = 'block';
-        }
-
-        restartButton.addEventListener('click', () => location.reload());
-        
         gameLoop();
     </script>
 </body>
