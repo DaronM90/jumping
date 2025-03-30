@@ -39,13 +39,17 @@
         const playerImage = new Image();
         playerImage.src = 'https://i.imgur.com/OZzJ6KA.png';
         
-        for (let i = 0; i < 10; i++) {
-            platforms.push({
+        function generatePlatform(y) {
+            return {
                 x: Math.random() * (canvas.width - 70),
-                y: i * (canvas.height / 10),
+                y: y,
                 width: 70,
                 height: 10
-            });
+            };
+        }
+        
+        for (let i = 0; i < 10; i++) {
+            platforms.push(generatePlatform(i * (canvas.height / 10)));
         }
 
         function gameLoop() {
@@ -73,7 +77,7 @@
             ctx.drawImage(playerImage, player.spriteFrame * 40, 0, 40, 40, player.x, player.y, player.width, player.height);
             
             ctx.fillStyle = 'brown';
-            platforms.forEach(platform => {
+            platforms.forEach((platform, index) => {
                 ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
                 if (
                     player.dy > 0 &&
@@ -85,6 +89,18 @@
                     player.dy = jumpPower;
                 }
             });
+            
+            // Удаление платформ, которые вышли за нижний край экрана
+            while (platforms.length > 0 && platforms[0].y > cameraY + canvas.height) {
+                platforms.shift();
+            }
+            
+            // Генерация новых платформ выше текущего верхнего уровня
+            let highestY = platforms[platforms.length - 1].y;
+            while (platforms.length < 10 || highestY > cameraY - canvas.height / 10) {
+                highestY -= canvas.height / 10;
+                platforms.push(generatePlatform(highestY));
+            }
             
             ctx.restore();
             requestAnimationFrame(gameLoop);
