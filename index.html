@@ -8,24 +8,67 @@
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Comic Sans MS', Arial, sans-serif; }
         canvas { display: block; }
-        #score { 
-            position: absolute; 
-            top: 10px; 
-            left: 10px; 
-            font-size: 24px; 
-            color: #fff; 
-            text-shadow: 2px 2px 4px #000; 
-            z-index: 10; 
+        #menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(#87CEEB, #4682B4);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+        #menu.hidden { display: none; }
+        #menu h1 {
+            font-size: 48px;
+            color: #fff;
+            text-shadow: 3px 3px 6px #000;
+            margin-bottom: 20px;
+        }
+        #menu button {
+            font-size: 24px;
+            padding: 15px 30px;
+            background-color: #FFD700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 2px 2px 4px #000;
+        }
+        #menu button:hover { background-color: #FFA500; }
+        #scoreDisplay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            color: #fff;
+            text-shadow: 2px 2px 4px #000;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
-    <div id="score">Score: 0</div>
+    <div id="menu">
+        <h1>Doodle Jump</h1>
+        <div id="bestScoreMenu">Best Score: 0</div>
+        <button id="startButton">Play</button>
+    </div>
+    <div id="scoreDisplay">
+        <div id="bestScore">Best Score: 0</div>
+        <div id="currentScore">Current Score: 0</div>
+    </div>
     <canvas id="gameCanvas"></canvas>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const scoreDisplay = document.getElementById('score');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const bestScoreDisplay = document.getElementById('bestScore');
+        const currentScoreDisplay = document.getElementById('currentScore');
+        const menu = document.getElementById('menu');
+        const bestScoreMenu = document.getElementById('bestScoreMenu');
+        const startButton = document.getElementById('startButton');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
@@ -51,6 +94,11 @@
         const MAX_PLATFORMS = 20;
         const OBSTACLE_SPEED = 3;
         const MAX_HORIZONTAL_GAP = 100;
+        let bestScore = localStorage.getItem('bestScore') ? parseInt(localStorage.getItem('bestScore')) : 0;
+        let gameRunning = false;
+
+        bestScoreMenu.textContent = 'Best Score: ' + bestScore;
+        bestScoreDisplay.textContent = 'Best Score: ' + bestScore;
 
         function generatePlatform(y, prevPlatform = null) {
             let x;
@@ -77,6 +125,7 @@
         function generateInitialPlatforms() {
             platforms = [];
             obstacles = [];
+            player.score = 0;
             for (let i = 0; i < 10; i++) {
                 let platformY = canvas.height - (i * 50);
                 platforms.push(generatePlatform(platformY, i > 0 ? platforms[i - 1] : null));
@@ -86,6 +135,7 @@
             player.maxY = player.y;
             cameraY = player.y - canvas.height / 2;
             player.dy = jumpPower;
+            currentScoreDisplay.textContent = 'Current Score: 0';
         }
 
         function generateNewPlatforms() {
@@ -106,8 +156,6 @@
             obstacles.forEach(obstacle => obstacle.y += obstacle.dy);
             obstacles = obstacles.filter(o => o.y < cameraY + canvas.height);
         }
-
-        generateInitialPlatforms();
 
         let isTouching = false;
 
@@ -145,59 +193,72 @@
 
         function drawBackground() {
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            gradient.addColorStop(0, '#87CEEB'); // Светло-голубой сверху
-            gradient.addColorStop(1, '#4682B4'); // Темно-голубой снизу
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#4682B4');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
         function draw() {
-            drawBackground(); // Рисуем градиентный фон
+            if (!gameRunning) return;
+            drawBackground();
 
-            // Платформы (трава)
             platforms.forEach(platform => {
                 const platformY = platform.y - cameraY;
                 if (platformY > -platform.height && platformY < canvas.height) {
-                    ctx.fillStyle = '#8B4513'; // Коричневая основа
+                    ctx.fillStyle = '#8B4513';
                     ctx.fillRect(platform.x, platformY, platform.width, platform.height);
-                    ctx.fillStyle = '#32CD32'; // Зеленая трава сверху
+                    ctx.fillStyle = '#32CD32';
                     ctx.fillRect(platform.x, platformY - 2, platform.width, 2);
                 }
             });
 
-            // Персонаж (круг с глазами)
             const playerY = player.y - cameraY;
             if (playerY > -player.height && playerY < canvas.height) {
-                ctx.fillStyle = '#FFD700'; // Желтый цвет
+                ctx.fillStyle = '#FFD700';
                 ctx.beginPath();
                 ctx.arc(player.x + player.width / 2, playerY + player.height / 2, player.width / 2, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = '#000'; // Глаза
+                ctx.fillStyle = '#000';
                 ctx.beginPath();
                 ctx.arc(player.x + player.width / 3, playerY + player.height / 3, 3, 0, Math.PI * 2);
                 ctx.arc(player.x + player.width * 2 / 3, playerY + player.height / 3, 3, 0, Math.PI * 2);
                 ctx.fill();
             }
 
-            // Препятствия (шипы)
             ctx.fillStyle = '#FF0000';
             obstacles.forEach(obstacle => {
                 const obstacleY = obstacle.y - cameraY;
                 if (obstacleY > -obstacle.height && obstacleY < canvas.height) {
                     ctx.beginPath();
-                    ctx.moveTo(obstacle.x + obstacle.width / 2, obstacleY); // Вершина треугольника
-                    ctx.lineTo(obstacle.x, obstacleY + obstacle.height); // Левая точка
-                    ctx.lineTo(obstacle.x + obstacle.width, obstacleY + obstacle.height); // Правая точка
+                    ctx.moveTo(obstacle.x + obstacle.width / 2, obstacleY);
+                    ctx.lineTo(obstacle.x, obstacleY + obstacle.height);
+                    ctx.lineTo(obstacle.x + obstacle.width, obstacleY + obstacle.height);
                     ctx.closePath();
                     ctx.fill();
                 }
             });
         }
 
+        function updateScore() {
+            if (player.score > bestScore) {
+                bestScore = player.score;
+                localStorage.setItem('bestScore', bestScore);
+                bestScoreDisplay.textContent = 'Best Score: ' + bestScore;
+                bestScoreMenu.textContent = 'Best Score: ' + bestScore;
+            }
+            currentScoreDisplay.textContent = 'Current Score: ' + player.score;
+        }
+
         let lastTime = 0;
         const frameRate = 1000 / 60;
 
         function gameLoop(timestamp) {
+            if (!gameRunning) {
+                drawBackground(); // Отрисовка фона в меню
+                return;
+            }
+
             if (timestamp - lastTime >= frameRate) {
                 player.dy += gravity;
                 player.y += player.dy;
@@ -216,8 +277,7 @@
                 if (player.y < player.maxY) {
                     player.maxY = player.y;
                     player.score = Math.abs(Math.floor((canvas.height - player.maxY) / 10));
-                    scoreDisplay.textContent = 'Score: ' + player.score;
-                    cameraY = player.maxY - canvas.height / 2;
+                    updateScore();
                 }
 
                 generateNewPlatforms();
@@ -226,7 +286,8 @@
                 for (let obstacle of obstacles) {
                     if (checkCollision(player, obstacle)) {
                         window.Telegram.WebApp.showAlert('Game Over! Hit an obstacle. Score: ' + player.score);
-                        generateInitialPlatforms();
+                        gameRunning = false;
+                        menu.classList.remove('hidden');
                         break;
                     }
                 }
@@ -235,13 +296,21 @@
 
                 if (player.y - cameraY > canvas.height) {
                     window.Telegram.WebApp.showAlert('Game Over! Fell off. Score: ' + player.score);
-                    generateInitialPlatforms();
+                    gameRunning = false;
+                    menu.classList.remove('hidden');
                 }
 
                 lastTime = timestamp;
             }
             requestAnimationFrame(gameLoop);
         }
+
+        startButton.addEventListener('click', () => {
+            menu.classList.add('hidden');
+            generateInitialPlatforms();
+            gameRunning = true;
+        });
+
         requestAnimationFrame(gameLoop);
     </script>
 </body>
