@@ -160,6 +160,7 @@
         let isTouching = false;
 
         function handleTouchStart(event) {
+            if (!gameRunning) return;
             event.preventDefault();
             isTouching = true;
             let touchX = event.touches ? event.touches[0].clientX : event.clientX;
@@ -167,12 +168,14 @@
         }
 
         function handleTouchMove(event) {
+            if (!gameRunning) return;
             event.preventDefault();
             let touchX = event.touches ? event.touches[0].clientX : event.clientX;
             player.dx = touchX < canvas.width / 2 ? -moveSpeed : moveSpeed;
         }
 
         function handleTouchEnd(event) {
+            if (!gameRunning) return;
             event.preventDefault();
             isTouching = false;
             player.dx = 0;
@@ -200,44 +203,45 @@
         }
 
         function draw() {
-            if (!gameRunning) return;
             drawBackground();
 
-            platforms.forEach(platform => {
-                const platformY = platform.y - cameraY;
-                if (platformY > -platform.height && platformY < canvas.height) {
-                    ctx.fillStyle = '#8B4513';
-                    ctx.fillRect(platform.x, platformY, platform.width, platform.height);
-                    ctx.fillStyle = '#32CD32';
-                    ctx.fillRect(platform.x, platformY - 2, platform.width, 2);
-                }
-            });
+            if (gameRunning) {
+                platforms.forEach(platform => {
+                    const platformY = platform.y - cameraY;
+                    if (platformY > -platform.height && platformY < canvas.height) {
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(platform.x, platformY, platform.width, platform.height);
+                        ctx.fillStyle = '#32CD32';
+                        ctx.fillRect(platform.x, platformY - 2, platform.width, 2);
+                    }
+                });
 
-            const playerY = player.y - cameraY;
-            if (playerY > -player.height && playerY < canvas.height) {
-                ctx.fillStyle = '#FFD700';
-                ctx.beginPath();
-                ctx.arc(player.x + player.width / 2, playerY + player.height / 2, player.width / 2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(player.x + player.width / 3, playerY + player.height / 3, 3, 0, Math.PI * 2);
-                ctx.arc(player.x + player.width * 2 / 3, playerY + player.height / 3, 3, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            ctx.fillStyle = '#FF0000';
-            obstacles.forEach(obstacle => {
-                const obstacleY = obstacle.y - cameraY;
-                if (obstacleY > -obstacle.height && obstacleY < canvas.height) {
+                const playerY = player.y - cameraY;
+                if (playerY > -player.height && playerY < canvas.height) {
+                    ctx.fillStyle = '#FFD700';
                     ctx.beginPath();
-                    ctx.moveTo(obstacle.x + obstacle.width / 2, obstacleY);
-                    ctx.lineTo(obstacle.x, obstacleY + obstacle.height);
-                    ctx.lineTo(obstacle.x + obstacle.width, obstacleY + obstacle.height);
-                    ctx.closePath();
+                    ctx.arc(player.x + player.width / 2, playerY + player.height / 2, player.width / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    ctx.arc(player.x + player.width / 3, playerY + player.height / 3, 3, 0, Math.PI * 2);
+                    ctx.arc(player.x + player.width * 2 / 3, playerY + player.height / 3, 3, 0, Math.PI * 2);
                     ctx.fill();
                 }
-            });
+
+                ctx.fillStyle = '#FF0000';
+                obstacles.forEach(obstacle => {
+                    const obstacleY = obstacle.y - cameraY;
+                    if (obstacleY > -obstacle.height && obstacleY < canvas.height) {
+                        ctx.beginPath();
+                        ctx.moveTo(obstacle.x + obstacle.width / 2, obstacleY);
+                        ctx.lineTo(obstacle.x, obstacleY + obstacle.height);
+                        ctx.lineTo(obstacle.x + obstacle.width, obstacleY + obstacle.height);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                });
+            }
         }
 
         function updateScore() {
@@ -254,52 +258,47 @@
         const frameRate = 1000 / 60;
 
         function gameLoop(timestamp) {
-            if (!gameRunning) {
-                drawBackground(); // Отрисовка фона в меню
-                return;
-            }
-
             if (timestamp - lastTime >= frameRate) {
-                player.dy += gravity;
-                player.y += player.dy;
-                if (isTouching) player.x += player.dx;
+                if (gameRunning) {
+                    player.dy += gravity;
+                    player.y += player.dy;
+                    if (isTouching) player.x += player.dx;
 
-                if (player.x < 0) player.x = 0;
-                if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+                    if (player.x < 0) player.x = 0;
+                    if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
 
-                platforms.forEach(platform => {
-                    if (checkCollision(player, platform) && player.dy > 0) {
-                        player.y = platform.y - player.height;
-                        player.dy = jumpPower;
+                    platforms.forEach(platform => {
+                        if (checkCollision(player, platform) && player.dy > 0) {
+                            player.y = platform.y - player.height;
+                            player.dy = jumpPower;
+                        }
+                    });
+
+                    if (player.y < player.maxY) {
+                        player.maxY = player.y;
+                        player.score = Math.abs(Math.floor((canvas.height - player.maxY) / 10));
+                        updateScore();
                     }
-                });
 
-                if (player.y < player.maxY) {
-                    player.maxY = player.y;
-                    player.score = Math.abs(Math.floor((canvas.height - player.maxY) / 10));
-                    updateScore();
-                }
+                    generateNewPlatforms();
+                    generateObstacles();
 
-                generateNewPlatforms();
-                generateObstacles();
+                    for (let obstacle of obstacles) {
+                        if (checkCollision(player, obstacle)) {
+                            window.Telegram.WebApp.showAlert('Game Over! Hit an obstacle. Score: ' + player.score);
+                            gameRunning = false;
+                            menu.classList.remove('hidden');
+                            break;
+                        }
+                    }
 
-                for (let obstacle of obstacles) {
-                    if (checkCollision(player, obstacle)) {
-                        window.Telegram.WebApp.showAlert('Game Over! Hit an obstacle. Score: ' + player.score);
+                    if (player.y - cameraY > canvas.height) {
+                        window.Telegram.WebApp.showAlert('Game Over! Fell off. Score: ' + player.score);
                         gameRunning = false;
                         menu.classList.remove('hidden');
-                        break;
                     }
                 }
-
                 draw();
-
-                if (player.y - cameraY > canvas.height) {
-                    window.Telegram.WebApp.showAlert('Game Over! Fell off. Score: ' + player.score);
-                    gameRunning = false;
-                    menu.classList.remove('hidden');
-                }
-
                 lastTime = timestamp;
             }
             requestAnimationFrame(gameLoop);
@@ -309,6 +308,7 @@
             menu.classList.add('hidden');
             generateInitialPlatforms();
             gameRunning = true;
+            draw(); // Принудительная отрисовка при старте
         });
 
         requestAnimationFrame(gameLoop);
