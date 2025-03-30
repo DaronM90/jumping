@@ -56,17 +56,13 @@
             dy: 0, 
             dx: 0, 
             score: 0, 
-            maxY: 0, 
-            spriteFrame: 0 
+            maxY: 0 
         };
         const gravity = 0.4;
         const jumpPower = -10;
         const moveSpeed = 5;
         let cameraY = 0;
         const platforms = [];
-        const obstacles = [];
-        const playerImage = new Image();
-        playerImage.src = 'https://i.imgur.com/OZzJ6KA.png';
         let gameOver = false;
         
         function generatePlatform(y) {
