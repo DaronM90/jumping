@@ -101,7 +101,7 @@
         }
 
         function generateNewPlatforms() {
-            while (platforms.length < 10) {
+            while (platforms.length < 10 || platforms[platforms.length - 1].y > player.maxY - canvas.height) {
                 let newY = platforms[platforms.length - 1].y - 80;
                 platforms.push(generatePlatform(newY));
             }
