@@ -78,8 +78,8 @@
         let player = { 
             x: 0, 
             y: 0, 
-            width: 40, // Увеличен размер
-            height: 60, // Увеличен размер
+            width: 40, 
+            height: 60, 
             dy: 0, 
             dx: 0, 
             score: 0, 
@@ -152,15 +152,19 @@
             player.maxY = player.y;
             cameraY = player.y - canvas.height / 2;
             player.dy = jumpPower;
-            currentScoreDisplay.textContent = 'Current Score: 0';
+            currentScoreDisplay.textContent = 'Current Score: ' + player.score;
         }
 
         function generateNewPlatforms() {
             const topPlatformY = platforms.length > 0 ? Math.min(...platforms.map(p => p.y)) : canvas.height;
             const bottomLimit = cameraY + canvas.height + 100;
 
-            if (topPlatformY > cameraY - canvas.height / 2 && platforms.length < MAX_PLATFORMS) {
-                const newY = topPlatformY - 50;
+            // Уменьшаем частоту появления платформ после 500 очков
+            const platformChance = player.score >= 500 ? 0.3 : 1; // 30% шанс после 500 очков
+            const verticalGap = player.score >= 500 ? 80 : 50; // Увеличиваем расстояние между платформами
+
+            if (topPlatformY > cameraY - canvas.height / 2 && platforms.length < MAX_PLATFORMS && Math.random() < platformChance) {
+                const newY = topPlatformY - verticalGap;
                 platforms.push(generatePlatform(newY, platforms[platforms.length - 1]));
             }
             platforms = platforms.filter(p => p.y > cameraY - canvas.height && p.y < bottomLimit);
@@ -218,6 +222,19 @@
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+            // Статичные облака
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            ctx.arc(100, 150, 40, 0, Math.PI * 2);
+            ctx.arc(150, 130, 50, 0, Math.PI * 2);
+            ctx.arc(200, 160, 30, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(canvas.width - 150, 250, 35, 0, Math.PI * 2);
+            ctx.arc(canvas.width - 100, 230, 45, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Движущиеся облака
             const cloudOffset = cameraY * 0.2;
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             clouds.forEach((cloud, index) => {
@@ -256,20 +273,18 @@
 
                 const playerY = player.y - cameraY;
                 if (playerY > -player.height && playerY < canvas.height) {
-                    // Персонаж как иконка Hola VPN
                     const squashFactor = Math.min(0.2, Math.abs(player.dy) * 0.02);
                     const widthScale = 1 + squashFactor;
                     const heightScale = 1 - squashFactor;
-                    ctx.fillStyle = '#FF6200'; // Оранжевый цвет Hola VPN
+                    ctx.fillStyle = '#FF6200';
                     ctx.beginPath();
-                    ctx.moveTo(player.x + player.width / 2, playerY); // Вершина пламени
+                    ctx.moveTo(player.x + player.width / 2, playerY);
                     ctx.quadraticCurveTo(player.x + player.width * widthScale, playerY + player.height / 2, 
                                         player.x + player.width / 2, playerY + player.height * heightScale);
                     ctx.quadraticCurveTo(player.x, playerY + player.height / 2, 
                                         player.x + player.width / 2, playerY);
                     ctx.fill();
 
-                    // Белые глазки с черными зрачками
                     ctx.fillStyle = '#FFFFFF';
                     ctx.beginPath();
                     ctx.arc(player.x + player.width / 3 * widthScale, playerY + player.height / 3 * heightScale, 6, 0, Math.PI * 2);
@@ -282,10 +297,11 @@
                     ctx.fill();
                 }
 
-                ctx.fillStyle = '#00BFFF';
+                // Падающие капли с контуром для контраста
                 obstacles.forEach(obstacle => {
                     const obstacleY = obstacle.y - cameraY;
                     if (obstacleY > -obstacle.height && obstacleY < canvas.height) {
+                        ctx.fillStyle = '#00BFFF';
                         ctx.beginPath();
                         ctx.arc(obstacle.x + obstacle.width / 2, obstacleY + obstacle.height - obstacle.width / 2, obstacle.width / 2, 0, Math.PI);
                         ctx.lineTo(obstacle.x + obstacle.width, obstacleY + obstacle.height - obstacle.width / 2);
@@ -293,6 +309,10 @@
                                             obstacle.x, obstacleY + obstacle.height - obstacle.width / 2);
                         ctx.closePath();
                         ctx.fill();
+                        // Черный контур для контраста
+                        ctx.strokeStyle = '#000000';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
                     }
                 });
             }
