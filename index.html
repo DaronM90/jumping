@@ -91,6 +91,7 @@
         let cameraY = 0;
         let platforms = [];
         let obstacles = [];
+        let clouds = []; // Массив для облаков
         const MAX_PLATFORMS = 20;
         const OBSTACLE_SPEED = 3;
         const MAX_HORIZONTAL_GAP = 100;
@@ -121,14 +122,31 @@
                 dy: OBSTACLE_SPEED
             };
         }
-        
+
+        function generateCloud() {
+            return {
+                x: Math.random() * canvas.width,
+                y: cameraY + canvas.height + Math.random() * 200, // Появляются ниже экрана
+                radius: 30 + Math.random() * 20 // Случайный размер от 30 до 50
+            };
+        }
+
         function generateInitialPlatforms() {
             platforms = [];
             obstacles = [];
+            clouds = [];
             player.score = 0;
             for (let i = 0; i < 10; i++) {
                 let platformY = canvas.height - (i * 50);
                 platforms.push(generatePlatform(platformY, i > 0 ? platforms[i - 1] : null));
+            }
+            // Начальные облака
+            for (let i = 0; i < 5; i++) {
+                clouds.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * (canvas.height + 200) - 200,
+                    radius: 30 + Math.random() * 20
+                });
             }
             player.x = platforms[0].x + platforms[0].width / 2 - player.width / 2;
             player.y = platforms[0].y - player.height;
@@ -201,18 +219,20 @@
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Облака с замедленным движением
-            const cloudOffset = cameraY * 0.2; // Замедление в 5 раз (0.2 вместо 1)
+            // Облака
+            const cloudOffset = cameraY * 0.2;
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.beginPath();
-            ctx.arc(100, 100 + cloudOffset, 40, 0, Math.PI * 2);
-            ctx.arc(150, 80 + cloudOffset, 50, 0, Math.PI * 2);
-            ctx.arc(200, 110 + cloudOffset, 30, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(canvas.width - 150, 200 + cloudOffset, 35, 0, Math.PI * 2);
-            ctx.arc(canvas.width - 100, 180 + cloudOffset, 45, 0, Math.PI * 2);
-            ctx.fill();
+            clouds.forEach(cloud => {
+                const cloudY = cloud.y - cloudOffset;
+                if (cloudY < -cloud.radius) {
+                    // Если облако ушло за верхний край, заменяем его новым снизу
+                    cloud.y = cameraY + canvas.height + cloud.radius + Math.random() * 200;
+                    cloud.x = Math.random() * canvas.width;
+                }
+                ctx.beginPath();
+                ctx.arc(cloud.x, cloudY, cloud.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
         }
 
         function draw() {
@@ -244,20 +264,25 @@
                     ctx.ellipse(player.x + player.width / 2, playerY + player.height, player.width / 2.5, 5, 0, 0, Math.PI * 2);
                     ctx.fill();
 
-                    const jumpScale = Math.max(0.8, 1 - Math.abs(player.dy) * 0.05);
+                    // Сплющивание персонажа
+                    const squashFactor = Math.min(0.2, Math.abs(player.dy) * 0.02); // Небольшое сплющивание
+                    const widthScale = 1 + squashFactor;
+                    const heightScale = 1 - squashFactor;
                     ctx.fillStyle = '#FFD700';
                     ctx.beginPath();
-                    ctx.ellipse(player.x + player.width / 2, playerY + player.height / 2, player.width / 2 * jumpScale, player.height / 2, 0, 0, Math.PI * 2);
+                    ctx.ellipse(player.x + player.width / 2, playerY + player.height / 2, 
+                                player.width / 2 * widthScale, player.height / 2 * heightScale, 
+                                0, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.fillStyle = '#000';
                     ctx.beginPath();
-                    ctx.arc(player.x + player.width / 3 * jumpScale, playerY + player.height / 3, 3, 0, Math.PI * 2);
-                    ctx.arc(player.x + player.width * 2 / 3 * jumpScale, playerY + player.height / 3, 3, 0, Math.PI * 2);
+                    ctx.arc(player.x + player.width / 3 * widthScale, playerY + player.height / 3 * heightScale, 3, 0, Math.PI * 2);
+                    ctx.arc(player.x + player.width * 2 / 3 * widthScale, playerY + player.height / 3 * heightScale, 3, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.strokeStyle = '#000';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
-                    ctx.arc(player.x + player.width / 2, playerY + player.height / 2 + 3, 8 * jumpScale, Math.PI * 0.2, Math.PI * 0.8);
+                    ctx.arc(player.x + player.width / 2, playerY + player.height / 2 + 3, 8 * widthScale, Math.PI * 0.2, Math.PI * 0.8);
                     ctx.stroke();
                 }
 
