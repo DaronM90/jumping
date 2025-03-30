@@ -1,4 +1,3 @@
-"# jumping" 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,6 +34,7 @@
         const gravity = 0.4;
         const jumpPower = -10;
         const moveSpeed = 5;
+        let cameraY = 0;
         const platforms = [];
         const playerImage = new Image();
         playerImage.src = 'https://i.imgur.com/OZzJ6KA.png';
@@ -63,13 +63,18 @@
                 player.maxY = player.y;
                 player.score = Math.abs(Math.floor((canvas.height - player.maxY) / 10));
                 scoreDisplay.textContent = 'Score: ' + player.score;
+                cameraY += player.dy;
             }
+            
+            ctx.save();
+            ctx.translate(0, -cameraY);
             
             player.spriteFrame = player.dy < 0 ? 1 : 0;
             ctx.drawImage(playerImage, player.spriteFrame * 40, 0, 40, 40, player.x, player.y, player.width, player.height);
             
             ctx.fillStyle = 'brown';
             platforms.forEach(platform => {
+                platform.y += player.dy;
                 ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
                 if (
                     player.dy > 0 &&
@@ -82,6 +87,7 @@
                 }
             });
             
+            ctx.restore();
             requestAnimationFrame(gameLoop);
         }
 
@@ -103,3 +109,4 @@
     </script>
 </body>
 </html>
+
