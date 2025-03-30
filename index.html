@@ -201,16 +201,17 @@
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Облака
+            // Облака с замедленным движением
+            const cloudOffset = cameraY * 0.2; // Замедление в 5 раз (0.2 вместо 1)
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
             ctx.beginPath();
-            ctx.arc(100, cameraY + 100, 40, 0, Math.PI * 2);
-            ctx.arc(150, cameraY + 80, 50, 0, Math.PI * 2);
-            ctx.arc(200, cameraY + 110, 30, 0, Math.PI * 2);
+            ctx.arc(100, 100 + cloudOffset, 40, 0, Math.PI * 2);
+            ctx.arc(150, 80 + cloudOffset, 50, 0, Math.PI * 2);
+            ctx.arc(200, 110 + cloudOffset, 30, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(canvas.width - 150, cameraY + 200, 35, 0, Math.PI * 2);
-            ctx.arc(canvas.width - 100, cameraY + 180, 45, 0, Math.PI * 2);
+            ctx.arc(canvas.width - 150, 200 + cloudOffset, 35, 0, Math.PI * 2);
+            ctx.arc(canvas.width - 100, 180 + cloudOffset, 45, 0, Math.PI * 2);
             ctx.fill();
         }
 
@@ -221,11 +222,10 @@
                 platforms.forEach(platform => {
                     const platformY = platform.y - cameraY;
                     if (platformY > -platform.height && platformY < canvas.height) {
-                        // Платформа с текстурой
                         ctx.fillStyle = '#8B4513';
                         ctx.fillRect(platform.x, platformY, platform.width, platform.height);
                         ctx.fillStyle = '#32CD32';
-                        ctx.fillRect(platform.x, platformY - 4, platform.width, 4); // Более толстая трава
+                        ctx.fillRect(platform.x, platformY - 4, platform.width, 4);
                         ctx.strokeStyle = '#228B22';
                         ctx.lineWidth = 1;
                         ctx.beginPath();
@@ -239,14 +239,12 @@
 
                 const playerY = player.y - cameraY;
                 if (playerY > -player.height && playerY < canvas.height) {
-                    // Тень под персонажем
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                     ctx.beginPath();
                     ctx.ellipse(player.x + player.width / 2, playerY + player.height, player.width / 2.5, 5, 0, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // Персонаж с анимацией прыжка
-                    const jumpScale = Math.max(0.8, 1 - Math.abs(player.dy) * 0.05); // Сжатие при прыжке
+                    const jumpScale = Math.max(0.8, 1 - Math.abs(player.dy) * 0.05);
                     ctx.fillStyle = '#FFD700';
                     ctx.beginPath();
                     ctx.ellipse(player.x + player.width / 2, playerY + player.height / 2, player.width / 2 * jumpScale, player.height / 2, 0, 0, Math.PI * 2);
@@ -256,7 +254,6 @@
                     ctx.arc(player.x + player.width / 3 * jumpScale, playerY + player.height / 3, 3, 0, Math.PI * 2);
                     ctx.arc(player.x + player.width * 2 / 3 * jumpScale, playerY + player.height / 3, 3, 0, Math.PI * 2);
                     ctx.fill();
-                    // Улыбка
                     ctx.strokeStyle = '#000';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
@@ -274,7 +271,6 @@
                         ctx.lineTo(obstacle.x + obstacle.width, obstacleY + obstacle.height);
                         ctx.closePath();
                         ctx.fill();
-                        // Шипы сверху
                         ctx.fillStyle = '#A9A9A9';
                         ctx.beginPath();
                         ctx.moveTo(obstacle.x + obstacle.width / 4, obstacleY + 5);
