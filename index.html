@@ -8,43 +8,15 @@
         body { margin: 0; overflow: hidden; background-color: #87CEEB; font-family: Arial, sans-serif; }
         canvas { display: block; }
         #score { position: absolute; top: 10px; left: 10px; font-size: 20px; color: white; }
-        #gameOver { 
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 20px;
-            font-size: 24px;
-            text-align: center;
-        }
-        #restartButton {
-            margin-top: 10px;
-            padding: 10px;
-            background: red;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
     <div id="score">Score: 0</div>
-    <div id="gameOver">
-        <p>Конец игры</p>
-        <p id="finalScore"></p>
-        <button id="restartButton">Начать заново</button>
-    </div>
     <canvas id="gameCanvas"></canvas>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('score');
-        const gameOverScreen = document.getElementById('gameOver');
-        const finalScoreDisplay = document.getElementById('finalScore');
-        const restartButton = document.getElementById('restartButton');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
@@ -63,7 +35,6 @@
         const moveSpeed = 5;
         let cameraY = 0;
         let platforms = [];
-        let gameOver = false;
         
         function generatePlatform(y) {
             return {
@@ -85,7 +56,6 @@
             player.maxY = player.y;
             cameraY = player.y - canvas.height / 2;
             player.dy = jumpPower;
-            gameOverScreen.style.display = 'none';
         }
 
         function generateNewPlatforms() {
@@ -94,19 +64,6 @@
                 platforms.push(generatePlatform(newY));
             }
         }
-
-        function endGame() {
-            gameOver = true;
-            gameOverScreen.style.display = 'block';
-            finalScoreDisplay.textContent = 'Score: ' + player.score;
-        }
-
-        restartButton.addEventListener('click', function() {
-            gameOver = false;
-            player.score = 0;
-            generateInitialPlatforms();
-            gameLoop();
-        });
 
         generateInitialPlatforms();
 
@@ -138,19 +95,12 @@
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
         function gameLoop() {
-            if (gameOver) return;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             player.dy += gravity;
             player.y += player.dy;
             if (isTouching) {
                 player.x += player.dx;
-            }
-            
-            if (player.y > canvas.height) {
-                endGame();
-                return;
             }
             
             if (player.y < player.maxY) {
