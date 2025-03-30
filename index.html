@@ -91,9 +91,6 @@
         for (let i = 0; i < 10; i++) {
             let platformY = i * (canvas.height / 10);
             platforms.push(generatePlatform(platformY));
-            if (i % 3 === 0) {
-                obstacles.push(generateObstacle(platformY - 20));
-            }
         }
 
         function gameLoop() {
@@ -105,7 +102,7 @@
             player.y += player.dy;
             player.x += player.dx;
             
-            if (player.y > canvas.height - player.height) {
+            if (player.y > canvas.height) {
                 endGame();
             }
             
@@ -114,6 +111,10 @@
                 player.score = Math.abs(Math.floor((canvas.height - player.maxY) / 10));
                 scoreDisplay.textContent = 'Score: ' + player.score;
                 cameraY = player.maxY - canvas.height / 2;
+            }
+            
+            if (player.score >= 100 && Math.random() < 0.02) {
+                obstacles.push(generateObstacle(player.maxY - canvas.height));
             }
             
             ctx.save();
@@ -154,35 +155,13 @@
             requestAnimationFrame(gameLoop);
         }
 
-        canvas.addEventListener('touchstart', function(event) {
-            let touchX = event.touches[0].clientX;
-            player.dx = touchX < canvas.width / 2 ? -moveSpeed : moveSpeed;
-        });
-
-        canvas.addEventListener('touchend', function() {
-            player.dx = 0;
-        });
-
-        canvas.addEventListener('mousedown', function(event) {
-            let clickX = event.clientX;
-            player.dx = clickX < canvas.width / 2 ? -moveSpeed : moveSpeed;
-        });
-
-        canvas.addEventListener('mouseup', function() {
-            player.dx = 0;
-        });
-
         function endGame() {
             gameOver = true;
             finalScoreDisplay.textContent = 'Итоговый счет: ' + player.score;
             gameOverScreen.style.display = 'block';
         }
 
-        function restartGame() {
-            location.reload();
-        }
-
-        restartButton.addEventListener('click', restartGame);
+        restartButton.addEventListener('click', () => location.reload());
         
         gameLoop();
     </script>
