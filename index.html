@@ -86,6 +86,7 @@
             cameraY = player.y - canvas.height / 2;
             player.dy = jumpPower;
             gameOverScreen.style.display = 'none';
+            gameOver = false;
         }
 
         function generateNewPlatforms() {
@@ -102,14 +103,12 @@
         }
 
         restartButton.addEventListener('click', function() {
-            gameOver = false;
-            player.score = 0;
             generateInitialPlatforms();
             gameLoop();
         });
 
         generateInitialPlatforms();
-
+        
         let isTouching = false;
 
         function handleTouchStart(event) {
