@@ -88,10 +88,21 @@
             };
         }
 
-        for (let i = 0; i < 10; i++) {
-            let platformY = i * (canvas.height / 10);
-            platforms.push(generatePlatform(platformY));
+        function generateInitialPlatforms() {
+            for (let i = 0; i < 10; i++) {
+                let platformY = i * (canvas.height / 10);
+                platforms.push(generatePlatform(platformY));
+            }
         }
+
+        function generateNewPlatforms() {
+            while (platforms.length < 10) {
+                let newY = platforms[platforms.length - 1].y - (canvas.height / 10);
+                platforms.push(generatePlatform(newY));
+            }
+        }
+
+        generateInitialPlatforms();
 
         player.x = platforms[0].x + platforms[0].width / 2 - player.width / 2;
         player.y = platforms[0].y - player.height;
@@ -137,6 +148,8 @@
             if (player.score >= 100 && Math.random() < 0.02) {
                 obstacles.push(generateObstacle(player.maxY - canvas.height));
             }
+
+            generateNewPlatforms();
             
             ctx.save();
             ctx.translate(0, -cameraY);
