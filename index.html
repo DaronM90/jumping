@@ -21,14 +21,13 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        // Telegram Web App инициализация
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand();
 
         let player = { 
             x: 0, 
             y: 0, 
-            width: 30, // Уменьшен размер для меньшей нагрузки
+            width: 30, 
             height: 30, 
             dy: 0, 
             dx: 0, 
@@ -40,19 +39,32 @@
         const moveSpeed = 5;
         let cameraY = 0;
         let platforms = [];
-        const MAX_PLATFORMS = 20; // Ограничение на количество платформ
+        let obstacles = []; // Массив для препятствий
+        const MAX_PLATFORMS = 20;
+        const OBSTACLE_SPEED = 3; // Скорость падения препятствий
         
         function generatePlatform(y) {
             return {
                 x: Math.random() * (canvas.width - 50),
                 y: y,
-                width: 50, // Уменьшен размер платформ
+                width: 50,
                 height: 10
+            };
+        }
+
+        function generateObstacle() {
+            return {
+                x: Math.random() * (canvas.width - 20),
+                y: cameraY - canvas.height / 2 - 20, // Появляются выше видимой области
+                width: 20,
+                height: 20,
+                dy: OBSTACLE_SPEED
             };
         }
         
         function generateInitialPlatforms() {
             platforms = [];
+            obstacles = []; // Очищаем препятствия при рестарте
             for (let i = 0; i < 10; i++) {
                 let platformY = canvas.height - (i * 80);
                 platforms.push(generatePlatform(platformY));
@@ -74,6 +86,20 @@
             }
 
             platforms = platforms.filter(p => p.y > cameraY - canvas.height && p.y < bottomLimit);
+        }
+
+        function generateObstacles() {
+            if (player.score >= 150 && Math.random() < 0.02) { // 2% шанс генерации в каждом кадре после 150 очков
+                obstacles.push(generateObstacle());
+            }
+
+            // Движение препятствий вниз
+            obstacles.forEach(obstacle => {
+                obstacle.y += obstacle.dy;
+            });
+
+            // Удаляем препятствия, которые ушли ниже экрана
+            obstacles = obstacles.filter(o => o.y < cameraY + canvas.height);
         }
 
         generateInitialPlatforms();
@@ -105,11 +131,11 @@
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-        function checkCollision(player, platform) {
-            return player.x < platform.x + platform.width &&
-                   player.x + player.width > platform.x &&
-                   player.y + player.height <= platform.y + platform.height &&
-                   player.y + player.height + player.dy >= platform.y;
+        function checkCollision(player, object) {
+            return player.x < object.x + object.width &&
+                   player.x + player.width > object.x &&
+                   player.y < object.y + object.height &&
+                   player.y + player.height > object.y;
         }
 
         function draw() {
@@ -128,10 +154,19 @@
             if (playerY > -player.height && playerY < canvas.height) {
                 ctx.fillRect(player.x, playerY, player.width, player.height);
             }
+
+            // Отрисовка препятствий
+            ctx.fillStyle = '#FF0000'; // Красный цвет для препятствий
+            obstacles.forEach(obstacle => {
+                const obstacleY = obstacle.y - cameraY;
+                if (obstacleY > -obstacle.height && obstacleY < canvas.height) {
+                    ctx.fillRect(obstacle.x, obstacleY, obstacle.width, obstacle.height);
+                }
+            });
         }
 
         let lastTime = 0;
-        const frameRate = 1000 / 60; // 60 FPS
+        const frameRate = 1000 / 60;
 
         function gameLoop(timestamp) {
             if (timestamp - lastTime >= frameRate) {
@@ -157,10 +192,21 @@
                 }
 
                 generateNewPlatforms();
+                generateObstacles();
+
+                // Проверка столкновения с препятствиями
+                for (let obstacle of obstacles) {
+                    if (checkCollision(player, obstacle)) {
+                        window.Telegram.WebApp.showAlert('Game Over! Hit an obstacle. Score: ' + player.score);
+                        generateInitialPlatforms();
+                        break;
+                    }
+                }
+
                 draw();
 
                 if (player.y - cameraY > canvas.height) {
-                    window.Telegram.WebApp.showAlert('Game Over! Score: ' + player.score);
+                    window.Telegram.WebApp.showAlert('Game Over! Fell off. Score: ' + player.score);
                     generateInitialPlatforms();
                 }
 
