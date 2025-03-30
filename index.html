@@ -80,13 +80,8 @@
                 let platformY = canvas.height - (i * 80);
                 platforms.push(generatePlatform(platformY));
             }
-            if (platforms.length > 0) {
-                player.x = platforms[0].x + platforms[0].width / 2 - player.width / 2;
-                player.y = platforms[0].y - player.height;
-            } else {
-                player.x = canvas.width / 2;
-                player.y = canvas.height - 100;
-            }
+            player.x = platforms[0].x + platforms[0].width / 2 - player.width / 2;
+            player.y = platforms[0].y - player.height;
             player.maxY = player.y;
             cameraY = player.y - canvas.height / 2;
             player.dy = jumpPower;
@@ -94,8 +89,8 @@
         }
 
         function generateNewPlatforms() {
-            while (platforms.length < 10 || platforms[platforms.length - 1].y > player.maxY - canvas.height) {
-                let newY = platforms[platforms.length - 1].y - 80;
+            while (platforms.length < 10 || (platforms.length > 0 && platforms[platforms.length - 1].y > player.maxY - canvas.height)) {
+                let newY = platforms.length > 0 ? platforms[platforms.length - 1].y - 80 : canvas.height - 80;
                 platforms.push(generatePlatform(newY));
             }
         }
