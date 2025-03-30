@@ -150,20 +150,27 @@
                 }
             });
             
-            while (platforms.length > 0 && platforms[0].y > cameraY + canvas.height) {
-                platforms.shift();
-                obstacles.push(generateObstacle(cameraY - canvas.height / 10));
-            }
-            
-            let highestY = platforms[platforms.length - 1].y;
-            while (platforms.length < 10 || highestY > cameraY - canvas.height / 10) {
-                highestY -= canvas.height / 10;
-                platforms.push(generatePlatform(highestY));
-            }
-            
             ctx.restore();
             requestAnimationFrame(gameLoop);
         }
+
+        canvas.addEventListener('touchstart', function(event) {
+            let touchX = event.touches[0].clientX;
+            player.dx = touchX < canvas.width / 2 ? -moveSpeed : moveSpeed;
+        });
+
+        canvas.addEventListener('touchend', function() {
+            player.dx = 0;
+        });
+
+        canvas.addEventListener('mousedown', function(event) {
+            let clickX = event.clientX;
+            player.dx = clickX < canvas.width / 2 ? -moveSpeed : moveSpeed;
+        });
+
+        canvas.addEventListener('mouseup', function() {
+            player.dx = 0;
+        });
 
         function endGame() {
             gameOver = true;
