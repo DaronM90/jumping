@@ -90,14 +90,16 @@
                 }
             });
             
-            // Генерация новых платформ
+            // Удаление платформ, которые вышли за нижний край экрана
             while (platforms.length > 0 && platforms[0].y > cameraY + canvas.height) {
                 platforms.shift();
             }
             
-            while (platforms.length < 10) {
-                let newY = platforms[platforms.length - 1].y - (canvas.height / 10);
-                platforms.push(generatePlatform(newY));
+            // Генерация новых платформ выше текущего верхнего уровня
+            let highestY = platforms[platforms.length - 1].y;
+            while (platforms.length < 10 || highestY > cameraY - canvas.height / 10) {
+                highestY -= canvas.height / 10;
+                platforms.push(generatePlatform(highestY));
             }
             
             ctx.restore();
