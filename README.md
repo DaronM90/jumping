@@ -8,15 +8,43 @@
         body { margin: 0; overflow: hidden; background-color: #87CEEB; font-family: Arial, sans-serif; }
         canvas { display: block; }
         #score { position: absolute; top: 10px; left: 10px; font-size: 20px; color: white; }
+        #gameOver { 
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+        #restartButton {
+            margin-top: 10px;
+            padding: 10px;
+            background: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div id="score">Score: 0</div>
+    <div id="gameOver">
+        <p>Конец игры</p>
+        <p id="finalScore"></p>
+        <button id="restartButton">Начать заново</button>
+    </div>
     <canvas id="gameCanvas"></canvas>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('score');
+        const gameOverScreen = document.getElementById('gameOver');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const restartButton = document.getElementById('restartButton');
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
@@ -36,8 +64,10 @@
         const moveSpeed = 5;
         let cameraY = canvas.height / 2;
         const platforms = [];
+        const obstacles = [];
         const playerImage = new Image();
         playerImage.src = 'https://i.imgur.com/OZzJ6KA.png';
+        let gameOver = false;
         
         function generatePlatform(y) {
             return {
@@ -48,11 +78,23 @@
             };
         }
         
+        function generateObstacle(y) {
+            return {
+                x: Math.random() * (canvas.width - 30),
+                y: y,
+                width: 30,
+                height: 30,
+                dy: 2 
+            };
+        }
+
         for (let i = 0; i < 10; i++) {
             platforms.push(generatePlatform(i * (canvas.height / 10)));
         }
 
         function gameLoop() {
+            if (gameOver) return;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             player.dy += gravity;
@@ -60,7 +102,7 @@
             player.x += player.dx;
             
             if (player.y > canvas.height - player.height) {
-                player.dy = jumpPower;
+                endGame();
             }
             
             if (player.y < player.maxY) {
@@ -90,12 +132,25 @@
                 }
             });
             
-            // Удаление платформ, которые вышли за нижний край экрана
+            ctx.fillStyle = 'red';
+            obstacles.forEach((obstacle, index) => {
+                obstacle.y += obstacle.dy;
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                if (
+                    player.x < obstacle.x + obstacle.width &&
+                    player.x + player.width > obstacle.x &&
+                    player.y < obstacle.y + obstacle.height &&
+                    player.y + player.height > obstacle.y
+                ) {
+                    endGame();
+                }
+            });
+            
             while (platforms.length > 0 && platforms[0].y > cameraY + canvas.height) {
                 platforms.shift();
+                obstacles.push(generateObstacle(cameraY - canvas.height / 10));
             }
             
-            // Генерация новых платформ выше текущего верхнего уровня
             let highestY = platforms[platforms.length - 1].y;
             while (platforms.length < 10 || highestY > cameraY - canvas.height / 10) {
                 highestY -= canvas.height / 10;
@@ -106,19 +161,17 @@
             requestAnimationFrame(gameLoop);
         }
 
-        function handleMove(event) {
-            const touchX = event.touches ? event.touches[0].clientX : event.clientX;
-            player.dx = (touchX < canvas.width / 2) ? -moveSpeed : moveSpeed;
+        function endGame() {
+            gameOver = true;
+            finalScoreDisplay.textContent = 'Итоговый счет: ' + player.score;
+            gameOverScreen.style.display = 'block';
         }
 
-        function stopMove() {
-            player.dx = 0;
+        function restartGame() {
+            location.reload();
         }
 
-        canvas.addEventListener('mousedown', handleMove);
-        canvas.addEventListener('mouseup', stopMove);
-        canvas.addEventListener('touchstart', handleMove);
-        canvas.addEventListener('touchend', stopMove);
+        restartButton.addEventListener('click', restartGame);
         
         gameLoop();
     </script>
