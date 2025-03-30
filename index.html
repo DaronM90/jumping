@@ -78,16 +78,6 @@
             };
         }
         
-        function generateObstacle(y) {
-            return {
-                x: Math.random() * (canvas.width - 30),
-                y: y,
-                width: 30,
-                height: 30,
-                dy: 2 
-            };
-        }
-
         function generateInitialPlatforms() {
             platforms.length = 0;
             for (let i = 0; i < 10; i++) {
@@ -98,6 +88,7 @@
             player.y = platforms[0].y - player.height;
             player.maxY = player.y;
             cameraY = player.y - canvas.height / 2;
+            gameOverScreen.style.display = 'none';
         }
 
         function generateNewPlatforms() {
@@ -114,7 +105,10 @@
         }
 
         restartButton.addEventListener('click', function() {
-            location.reload();
+            gameOver = false;
+            player.score = 0;
+            generateInitialPlatforms();
+            gameLoop();
         });
 
         generateInitialPlatforms();
