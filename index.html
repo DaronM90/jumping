@@ -112,24 +112,22 @@
         let isTouching = false;
 
         function handleTouchStart(event) {
+            event.preventDefault();
             isTouching = true;
             let touchX = event.touches ? event.touches[0].clientX : event.clientX;
-            if (touchX < canvas.width / 2) {
-                player.dx = -moveSpeed;
-            } else {
-                player.dx = moveSpeed;
-            }
+            player.dx = touchX < canvas.width / 2 ? -moveSpeed : moveSpeed;
         }
 
-        function handleTouchEnd() {
+        function handleTouchEnd(event) {
+            event.preventDefault();
             isTouching = false;
             player.dx = 0;
         }
 
-        canvas.addEventListener('mousedown', handleTouchStart);
-        canvas.addEventListener('mouseup', handleTouchEnd);
-        canvas.addEventListener('touchstart', handleTouchStart);
-        canvas.addEventListener('touchend', handleTouchEnd);
+        canvas.addEventListener('mousedown', handleTouchStart, { passive: false });
+        canvas.addEventListener('mouseup', handleTouchEnd, { passive: false });
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
         function gameLoop() {
             if (gameOver) return;
@@ -166,7 +164,7 @@
             ctx.drawImage(playerImage, player.spriteFrame * 40, 0, 40, 40, player.x, player.y, player.width, player.height);
             
             ctx.fillStyle = 'brown';
-            platforms.forEach((platform, index) => {
+            platforms.forEach(platform => {
                 ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
                 if (
                     player.dy > 0 &&
@@ -180,7 +178,7 @@
             });
             
             ctx.fillStyle = 'red';
-            obstacles.forEach((obstacle, index) => {
+            obstacles.forEach(obstacle => {
                 obstacle.y += obstacle.dy;
                 ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
                 if (
