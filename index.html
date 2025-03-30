@@ -89,8 +89,8 @@
         }
 
         function generateNewPlatforms() {
-            while (platforms.length < 10 || platforms[platforms.length - 1].y > player.maxY - canvas.height) {
-                let newY = platforms[platforms.length - 1].y - 80;
+            while (platforms.length < 10 || (platforms.length > 0 && platforms[platforms.length - 1].y > player.maxY - canvas.height)) {
+                let newY = platforms.length > 0 ? platforms[platforms.length - 1].y - 80 : canvas.height;
                 platforms.push(generatePlatform(newY));
             }
         }
